@@ -2,16 +2,12 @@ package p2p
 
 import (
 	"context"
-	"errors"
 )
 
 // BaseName 基网名识
 // 注：匹配测试时也会兼容空字符串。
 // sha1("Hello, P2P..")
 const BaseName = "dec93aa06b30069759af0920b0d0ca31571d75c5"
-
-// ErrNameMismatch 基网名识不匹配错误。
-var ErrNameMismatch = errors.New("base-net's name mismatch")
 
 // NatType NAT类型枚举。
 type NatType int
