@@ -6,32 +6,31 @@
 
 ### 统一的服务发现机制
 
-**关键认识：所有功能都是应用子网，所有子网都通过在基网中搜寻获得初始连接信息。所有子网都集成对基网的连接。**
+**关键认识**：所有功能都是应用子网，所有子网都通过在基网中搜寻获得初始连接信息。所有子网都集成对基网的连接。
 
 ```
 节点自由市场
     ├─ 文件分享应用子网
     ├─ 即时通讯应用子网
-    ├─ STUN服务子网 ─────┐
-    ├─ 视频直播应用子网    │
-    ├─ 区块链应用子网      │
-    └─ ...               │
-                          │
-        ┌─────────────┘
-        │ 需要NAT穿透？
-        │ 搜寻 "stun-service"
-        │ 连入STUN子网
-        └─ 获得NAT探测和打洞协助
+    ├─ STUN 服务子网 *
+    ├─ 视频直播应用子网
+    ├─ 区块链应用子网
+    └─ ...
+
+    需要NAT穿透？
+    - 搜寻 "stun-service"
+    - 连入 STUN 服务子网
+    - 获得NAT探测和打洞协助
 ```
 
 **设计优势：**
 
-1. **完全对等**：STUN不是特殊设计，而是普通的应用子网（服务类，仅用途上划分，不特殊）。
-2. **按需连接**：只有需要NAT服务的应用才搜寻并连入STUN子网。
+1. **完全对等**：STUN 不是特殊设计，而是普通的应用子网（服务类，仅用途上划分，不特殊）。
+2. **按需连接**：只有需要NAT服务的应用才搜寻并连入 STUN 服务子网。
 3. **服务链**：应用子网间可以互为服务关系。
-   - STUN子网为其它子网提供NAT服务。
-   - CDN子网为其它子网提供加速服务。
+   - STUN 服务子网为其它子网提供NAT服务。
    - 存储子网为其它子网提供持久化服务。
+   - 中转子网为其它子网提供数据中转服务。
 4. **自然扩展**：任何新服务只需定义名识，就能被发现和使用。
 5. **去中心化纯粹**：基网就是一个宽泛的基础设施，所有应用都是子网，所有子网都内嵌连入基网。
 
@@ -138,17 +137,17 @@ Fallback: 如5分钟仍未成功
     // ... 现有配置
 
     // 节点发现配置
-    discovery_mode: "auto",     // auto | aggressive | passive | manual
-    discovery_timeout: 300,     // 发现超时时间(秒)，0表示无限制
-    discovery_concurrent: 1000, // 并发探测数
-    discovery_cloud_first: true,// 优先云服务商IP段
-    discovery_history: true,    // 使用历史记录辅助
+    discovery_mode: "auto",         // auto | aggressive | passive | manual
+    discovery_timeout: 300,         // 发现超时时间(秒)，0表示无限制
+    discovery_concurrent: 1000,     // 并发探测数
+    discovery_cloud_first: true,    // 优先云服务商IP段
+    discovery_history: true,        // 使用历史记录辅助
 
     // 历史节点缓存
-    history_cache: true,        // 启用历史节点缓存
-    history_file: "~/.ppnet/history.json",
-    history_max: 1000,          // 最多缓存节点数
-    history_ttl: 2592000,       // 历史记录有效期(秒，30天)
+    history_cache: true,            // 启用历史节点缓存
+    history_file: "~/.p2p/history.json",
+    history_max: 1000,              // 最多缓存节点数
+    history_ttl: 2592000,           // 历史记录有效期(秒，30天)
 }
 ```
 
@@ -181,9 +180,9 @@ Fallback: 如5分钟仍未成功
 ```go
 // 询问者通过起跳值控制广播范围
 query := &Query{
-    CurrentHops: 3,    // 从3开始
-    MaxHops:     15,   // 硬编码上限（在App中固定）
-    TargetID:    "my-app",
+    CurrentHops: 8,         // 从8开始
+    MaxHops:     15,        // 硬编码上限（在App中固定）
+    TargetID:    "my-app",  // 目标应用名识
 }
 
 // 工作原理：
@@ -750,23 +749,23 @@ P2P Network Metrics Report
 
 ```
 1. 用户A启动视频通话应用
-   └→ 连入基网（ppnet.Open）
+   └→ 连入基网（p2p.Open）
    └→ 搜寻同类应用节点
-   └→ 创建应用子网并连入
+   └→ 创建应用子网（p2p.New）并连入
 
 2. 用户A是NAT内网用户，需要NAT服务
    └→ 在基网搜寻 "stun-service"
-   └→ 连入STUN子网
+   └→ 连入STUN服务子网
    └→ 探测自己的NAT类型：Sym
 
 3. 用户B启动视频通话应用
-   └→ 连入基网（ppnet.Open）
+   └→ 连入基网（p2p.Open）
    └→ 搜寻同类应用节点
-   └→ 创建应用子网并连入
+   └→ 创建应用子网（p2p.New）并连入
 
 4. 用户B也是NAT内网用户，需要NAT服务
    └→ 在基网搜寻 "stun-service"
-   └→ 连入STUN子网
+   └→ 连入STUN服务子网
    └→ 探测自己的NAT类型：Sym
 
 5. 用户A和用户B在视频子网内互相发现，但无法直连
@@ -819,7 +818,7 @@ P2P Network Metrics Report
 
 **繁荣的服务生态**
 - 基础服务（STUN、Relay）。
-- 平台服务（CDN、Storage、Message）。
+- 平台服务（Storage、Message）。
 - 应用服务（各种P2P应用）。
 - 服务间可组合、可竞争。
 
