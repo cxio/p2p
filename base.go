@@ -1,3 +1,4 @@
+// Package p2p 提供P2P网络的基础功能实现。
 package p2p
 
 import (

@@ -24,7 +24,7 @@
 > **注：**
 > 在实际的实现中，节点搜寻功能由通用的**广播查找**接口实现。
 
-设计详见 [docs/design](docs/design.md)。
+设计构想详见 [conception/design](conception/design.md)。
 
 
 ### 关于毒IP
