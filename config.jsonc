@@ -1,0 +1,36 @@
+{
+    // ========== 基本配置 ==========
+    "server_uport": 7788,       // QUIC 服务器端口
+    "server_tport": 443,        // HTTP/2 服务器端口
+    "enable_http2": true,       // 是否启用HTTP/2
+    "http2_cleartext": false,   // HTTP/2 是否明文
+
+    // ========== 节点池 ==========
+    "pools": {
+        "shortlist_size": 100,      // 节点候选池大小
+        "max_outgoing_peers": 10,   // 连出节点数上限（组网池）
+        "max_incoming_peers": 50,   // 连入节点数上限（组网池）
+        "share_peers": 15,          // 分享节点数（含毒IP）
+        "connection_timeout": 10,   // 连接超时(秒)
+        "test_ratio": 0.65          // 可达性测试比例
+    },
+
+    // ========== 节点搜寻 ==========
+    "query": {
+        "reply_delay": 500,         // 回复收集延时(ms)
+        "max_relay_peers": 8,       // 转播&回传最多节点数
+        "cache_enabled": true,      // 启用缓存
+        "cache_ttl": 300,           // 缓存有效期(秒)
+        "cache_max_entries": 100    // 最大缓存条目数
+    },
+
+    // ========== 毒IP策略 ==========
+    "poison_ip": {
+        "enabled": true,            // 开启毒IP策略
+        "total_ratio": 0.30,        // 总占比30%
+        "confirmed_ratio": 0.15,    // 确认的大平台IP
+        "likely_ratio": 0.10,       // 可能的大平台IP
+        "experimental_ratio": 0.05, // 实验性IP
+        "dynamic_adjust": true      // 动态调整
+    }
+}
