@@ -96,7 +96,7 @@
 - 名识：具体应用的名称或其标识。
 - 协议：[`h3`, `h2`]。如果 HTTP/3（QUIC）受阻，降级到 HTTP/2。
 - 地址：公网IP:Port，可以有多个。
-- SPKI：证书的公钥信息指纹，即 sha256(SPKI)。
+- SPKI：证书的公钥信息指纹，即 sha256(Cert.SPKI)。
 - ECH： 服务器端 ECH 公钥（x25519）。
 - NATT：NAT类型（`Public` | `FullC` | `RC` | `P-RC` | `Sym`），可选（仅UDP需要）。
 - Extra：额外信息，由有需求的应用自行定义。
