@@ -29,6 +29,7 @@ type Peer struct {
 	Proto   string   // 协议（quic | http2）
 	Addrs   []string // 地址列表（IP:Port 格式）
 	SPKI    []byte   // SPKI 指纹（sha256(SPKI)）
+	ECH     []byte   // 服务器ech公钥
 	NATT    NatType  // NAT 类型，可选（仅UDP需要）
 	Extra   []byte   // 额外信息，可选
 }
