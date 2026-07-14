@@ -15,11 +15,12 @@ type NatType int
 
 // NAT类型常量。
 const (
-	Public   NatType = iota // 公网（Open Internet）
-	FullC                   // 完全锥型（Full Cone）
-	RC                      // 受限锥型（Restricted Cone）
-	P_RC                    // 端口受限锥型（Port Restricted Cone）
-	Sym_Like                // 类对称型（Symmetric Like）
+	Unknown  NatType = iota - 1 // 未知（Unknown）
+	Public                      // 公网（Open Internet）
+	FullC                       // 完全锥型（Full Cone）
+	RC                          // 受限锥型（Restricted Cone）
+	P_RC                        // 端口受限锥型（Port Restricted Cone）
+	Sym_Like                    // 类对称型（Symmetric Like）
 )
 
 // Peer 节点对象。

@@ -40,7 +40,7 @@ go vet ./...
 
 | 类型 | 说明 |
 |------|------|
-| `NatType` | NAT 类型枚举（Public / FullCone / RestrictedCone / PortRestrictedCone / Symmetric） |
+| `NatType` | NAT 类型枚举（Public / FullCone / RestrictedCone / PortRestrictedCone / Symmetric-Like） |
 | `Peer` | 节点信息（版本、身份名、协议、地址列表、SPKI、ECH Key、NAT 类型、扩展数据） |
 | `Finder` | 广播查找接口：`Find(ctx, msg) <-chan []byte` |
 | `Answerer` | 响应处理接口：`Answer(msg) ([]byte, error)` |
@@ -63,9 +63,9 @@ go vet ./...
 ### 安全机制
 
 - TLS 1.3 + 自签名证书，以 SPKI 指纹替代 CA 验证
-- HashX PoW 写入 TLS ClientHello，防止 DDoS
+- Equi-X PoW 写入 TLS ClientHello，防止 DDoS
 - ECH（Encrypted Client Hello）流量混淆
-- 毒化 IP 策略：节点分享中混入知名平台 IP（可能超过50%），提升审查成本
+- 毒化 IP 策略：节点分享中混入知名平台 IP（可能到50%），提升审查成本
 
 ### 配置文件（`config.jsonc`）
 
