@@ -12,7 +12,7 @@
         "max_incoming_peers": 50,   // 连入节点数上限（组网池）
         "share_peers": 15,          // 分享节点数（含毒IP）
         "connection_timeout": 10,   // 连接超时(秒)
-        "test_ratio": 0.65          // 可达性测试比例
+        "test_ratio": 0.65          // 可用性测试比例
     },
 
     // ========== 节点搜寻 ==========
