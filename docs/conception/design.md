@@ -14,7 +14,7 @@
 
 名识在节点声明自己的身份时提供，它与节点的网络信息组合，构成了节点自身的**节点信息**。
 
-- 版本：版本号（uint16）。
+- 版本：信息格式版本号（uint16）。
 - 名识：应用的标识，最长不超过64字节。
 - 协议：节点支持的协议，`h3` 或 `h2`，或两者同时支持。
 - 地址：公网地址（IP:Port），IPv6 格式（IPv4 映射为 IPv6），仅单个地址。
@@ -22,15 +22,62 @@
 - SPKIF：自签名证书 SPKI 的哈希指纹：`Hash256(Cert.SPKI)`。
 - NATT：NAT类型（`Public` | `FullC` | `RC` | `P-RC` | `Sym-Like`），可选（仅 `h3` 时需要）。
 - Extra：应用自定义信息（≤64 字节），可选。
+- Timestamp：节点信息的发布时间（Unix，秒），由发布者在求解工作量时确定。
 - Proof：工作量证明（`Equi-X`），抑制大规模节点生成。32字节。
-- PeerID：节点的身份ID，由上面的信息编码后哈希而来。
+- PeerID：节点的身份ID，`Hash256(Proof)`。
 
 > **设计：**
 > 通讯协议采用 HTTP/2 或 HTTP/3 以模拟浏览器流量，避免严苛审查环境下的连接问题。
 > TCP（`h2`）是 UDP（`h3`）不可用时的降级备选。
 >
-> 身份ID约束了节点信息的不可篡改，因此无需用较重的签名保护。
-> 因为如果身份不符，相关的验证和关系，就都不匹配了。
+> 节点信息不采用签名保护，而是工作量以及与节点ID的绑定：
+> - 承诺层：各字段经 Proof 绑定到 PeerID（见下），篡改即校验失败；
+> - 声明层：ECHC 在连接时自验证，容忍 NATT/Extra 的篡改（类似无效IP）。
+>
+> 签名所能证明的“私钥持有”，在 TLS 连接时经 SPKIF 核对完成。
+> 注意：中间人可将 ECHC 替换为无效配置以剥离 ECH 保护，客户端应对 ECH 协商失败的记录保持警惕。
+
+
+### 字段分层与身份绑定
+
+节点信息的字段分为两层：
+
+- **承诺层**：版本、名识、协议、IP、SPKIF、时间戳。
+  参与 Proof 的挑战种子计算（见下文），任何变更都会使 Proof 失效，连带影响 PeerID。
+- **声明层**：端口、ECHC、NATT、Extra。
+  不参与挑战种子计算，节点可持有同一 Proof 自由更新这些字段而保持身份不变。
+
+节点身份ID是 `Proof` 的哈希摘要，迫使攻击者研磨 PeerID（逼近目标 StoreKey）时必须支付工作量成本。
+
+
+### 身份关联与信誉锚点
+
+PeerID 随承诺层字段的变更而更替（地址漂移、时间戳刷新等），它不是持久身份，也不适合作为信誉的锚点。
+
+跨应用的身份关联由节点**自主选择**：
+
+- 节点在各子网的 PeerID 不同（名识不同），若节点复用同一 SPKI，即可主动选择可关联。
+- 节点为每个应用使用独立密钥，则各身份天然不可关联。
+
+信誉系统应以 SPKIF 为锚点而非 PeerID，它不受地址漂移与时间戳更替的影响。普通用户节点默认隔离；基础设施运营者可通过密钥复用，自愿积累跨服务的信誉。
+
+
+### 时间戳语义
+
+- **名识记录（应用节点信息）**：发布时间仅供参考排序，记录的有效性以连接验证为准。
+- **基网节点**：采用低频更新窗口，默认7天（可配置），过期记录被降权或弃用，节点应重新发布。
+  适度的身份更替可迫使 Sybil 身份成为持续性成本（而非一次性）。
+
+
+### 校验纪律与冲突处置
+
+消费方收到节点信息后，必须按序执行：
+
+1. 以承诺层字段重建挑战种子，验证 Proof 的 Equi-X 解合法；
+2. 核对 `Hash256(Proof) == PeerID`；
+3. 连接时核对对端证书 SPKI 与 SPKIF 一致。
+
+记录在被成功连接验证之前均为**临时记录**。同一 PeerID 出现多份冲突记录时（攻击者可能拼接他人的合法 Proof 与有毒的声明层字段），以连接验证结果为准。
 
 
 
@@ -43,23 +90,30 @@
 ```go
 // 生成：
 // @domainTag 固定的基网域标识
-// @Addr 节点公网地址（IP:Port）
+// @Ver 节点信息格式版本号
+// @Proto 节点支持的协议（h3/h2）
+// @AppID 名识（应用标识）
+// @IP 节点公网 IP，IPv6 取 /64 前缀
 // @SPKIF 可由节点自签名证书 SPKI 计算而来
+// @Timestamp 节点信息发布时间（Unix 秒）
 // @Rand16 一个16字节的随机数，将成为证明的后半段
 // @solution 一个合法解，2*8 = 16字节
 for {
-    challengeSeed := Hash256( domainTag || Addr || SPKIF || Rand16 )
+    challengeSeed := Hash256( domainTag || Ver || Proto || AppID || IP || SPKIF || Timestamp || Rand16 )
     solution, err := equix.Solve(challengeSeed, Rand16[0])
 }
 Proof := solution || Rand16
+PeerID := Hash256(Proof)
 
 // 验证：
 // 非对称代价，验证比创建轻量。
 Rand16 := Proof[16:]
-challengeSeed := Hash256( domainTag || Addr || SPKIF || Rand16 )
+challengeSeed := Hash256( domainTag || Ver || Proto || AppID || IP || SPKIF || Timestamp || Rand16 )
 
 solution := Proof[:16]
 isValid := equix.Verify(challengeSeed, solution, Rand16[0])
+
+isIdentity := Hash256(Proof) == PeerID
 ```
 
 每一个节点存储与自己 PeerID 异或距离最近的节点集（基网节点），供其它节点查询和路由。同时，节点也存储名识（实为 `StoreKey`，见下文）与自己 PeerID 异或距离最近的节点集（应用节点），供任意节点查询其需要的应用。
@@ -339,7 +393,7 @@ isValid := equix.Verify(challengeSeed, solution, Rand16[0])
 **对策：**
 - 节点连入时，需要提供初始的工作量认证。
 - 节点创建身份，也需要提供工作量证明（节点信息.Proof，与IP关联）。
-- 节点信誉系统（新节点权重低）。
+- 节点信誉系统（新节点权重低。信誉以 SPKIF 为锚点，支持跨应用自主选择关联）。
 - IP分布检测（同一IP段节点数限制）。
 
 
