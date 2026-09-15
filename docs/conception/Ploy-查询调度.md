@@ -19,7 +19,7 @@
 
 基网节点运行的以下几类查询在面向上与敏感查询**协议同构、格式不可区分**且**始终存在**，构成天然的背景杂讯：
 
-- DHT 路由维护（PeerID 近邻查找）
+- DHT 路由维护（NodeID 近邻查找）
 - 服务子网列表刷新（STUN、Relay 等）
 - 已接入应用子网的周期性邻居探测
 
@@ -59,9 +59,11 @@
 
 | Key | 来源 |
 |-----|------|
-| 基网路由刷新键 | PeerID 近邻查找，无具体名识 |
+| 基网路由刷新键 | NodeID 近邻查找，无具体名识 |
 | STUN 服务子网键 | `Hash256(domainTag \|\| "stun-service")` |
 | Relay 服务子网键 | `Hash256(domainTag \|\| "relay-service")` |
+
+> **注**：domainTag: `base-net.Subnet@v1`
 
 **可选行**（出厂预置或热更新下发）：
 
