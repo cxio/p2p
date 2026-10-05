@@ -22,7 +22,7 @@
     └─ ...
 
     ==> 需要 NAT 穿透？
-        - 搜寻 "stun-service"
+        - 搜寻 "stun2-service"
         - 连入 STUN 服务子网
         - 获得 NAT 探测和打洞协助
 ```
@@ -61,7 +61,7 @@
    └→ 创建应用子网（p2p.New）并连入
 
 2. 用户A是NAT内网用户，需要NAT服务
-   └→ 在基网搜寻 "stun-service"
+   └→ 在基网搜寻 "stun2-service"
    └→ 连入STUN服务子网
    └→ 探测自己的NAT类型
 
@@ -71,7 +71,7 @@
    └→ 创建应用子网（p2p.New）并连入
 
 4. 用户B也是NAT内网用户，需要NAT服务
-   └→ 在基网搜寻 "stun-service"
+   └→ 在基网搜寻 "stun2-service"
    └→ 连入STUN服务子网
    └→ 探测自己的NAT类型
 
